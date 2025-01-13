@@ -1,130 +1,100 @@
 #include <iostream>
-#include <limits>
-#include <set>
+#include <unordered_map>
 
 #include "./../include/grafo.hpp"
 #include "./../include/algoritmos.hpp"
 
-Grafo carregar_entrada()
+typedef std::unordered_map<size_t, std::string> mapa_ull_str_t;
+typedef std::unordered_map<std::string, size_t> mapa_str_ull_t;
+
+std::tuple<mapa_ull_str_t, Grafo, char> carregar_entrada()
 {
-    size_t n_vertices, n_arestas;
+    // captura tipo do algoritmo
+    char metodo;
+    std::cin >> metodo;
+
+    int n_vertices, n_arestas;
     std::cin >> n_vertices >> n_arestas;
 
-    Grafo grafo = Grafo(n_vertices + 2);
-    auto geradores = std::vector<bool>(n_vertices, false);
+    // associa cada cidade com um índice e vice-versa
+    mapa_ull_str_t mapa_ull_str;
+    mapa_str_ull_t mapa_str_ull;
+    Grafo grafo = Grafo(n_vertices);
 
-    for (size_t i = 0; i != n_vertices; i++)
+    // contador para diferenciar vértices e criar grafo ordenado pelos ids
+    int contador = 0;
+
+    for (int i = 0; i != n_arestas; i++)
     {
-        size_t v, demanda;
-        std::cin >> v >> demanda;
+        std::string v1, v2;
+        size_t dist;
+        std::cin >> v1 >> v2 >> dist;
 
-        if (demanda == 0)
+        auto [v1_it, inseriu_v1] = mapa_str_ull.insert(std::make_pair(v1, contador));
+        // se v1 ainda não existe no mapa
+        if (inseriu_v1)
         {
-            geradores[v] = true;
-            grafo.add_aresta(0, v, 0, 's');
+            mapa_ull_str.insert(std::make_pair(contador, v1));
+            contador++;
         }
-        else
+
+        auto [v2_it, inseriu_v2] = mapa_str_ull.insert(std::make_pair(v2, contador));
+        // se v2 ainda não existe no mapa
+        if (inseriu_v2)
         {
-            grafo.add_aresta(v, n_vertices + 1, demanda, 't');
+            mapa_ull_str.insert(std::make_pair(contador, v2));
+            contador++;
         }
+
+        // pega os iteradores do mapa e insere o conteúdo no grafo
+        grafo.add_aresta(v1_it->second, v2_it->second, dist);
+        grafo.add_aresta(v2_it->second, v1_it->second, dist);
     }
 
-    for (size_t i = 0; i != n_arestas; i++)
-    {
-        size_t v1, v2, cap;
-        std::cin >> v1 >> v2 >> cap;
-        if (geradores[v1])
-        {
-            grafo.add_capacidade(0, v1, cap);
-        }
-        grafo.add_aresta(v1, v2, cap, 'o');
-    }
-
-    return grafo;
+    return std::make_tuple(mapa_ull_str, grafo, metodo);
 }
 
-// comparador para ordenar o set de conexões críticas
-struct cmp
+std::pair<size_t, std::vector<size_t>> algoritmo(Grafo &grafo, char metodo)
 {
-    typedef std::tuple<size_t, size_t, size_t> tupla;
-    bool operator()(const tupla &e1, const tupla &e2) const
+    switch (metodo)
     {
-        size_t u1 = std::get<0>(e1), u2 = std::get<0>(e2);
-        size_t cap1 = std::get<2>(e1), cap2 = std::get<2>(e2);
-        if (cap1 == cap2)
-        {
-            return u1 < u2;
-        }
-        return cap1 > cap2;
+    case 'b':
+        return alg::forca_bruta(grafo);
+        break;
+    case 'd':
+        return alg::programacao_dinamica(grafo);
+        break;
+    case 'g':
+        return alg::guloso(grafo);
+        break;
+    default:
+        throw "Algo deu errado";
     }
-};
+}
 
-void processar_saida(Grafo &grafo)
+void processar_saida(mapa_ull_str_t &mapa, Grafo &grafo, char metodo)
 {
-    size_t e_total = 0, e_nao_atendida = 0;
-    size_t cap_total = 0;
+    auto [dist, caminho] = algoritmo(grafo, metodo);
+    std::cout << dist << "\n";
 
-    // conexões críticas (u, v, capacidade)
-    std::set<std::tuple<size_t, size_t, size_t>, cmp>
-        c_crit;
-
-    for (size_t u = 0; u != grafo.n_vertices; u++)
+    size_t n_c = caminho.size();
+    size_t i;
+    for(i = 0; i <= n_c; i++)
     {
-        for (auto &aresta : grafo[u])
-        {
-            size_t v = aresta.v;
-            auto &fluxo = grafo.fluxo[u][v];
-            switch (aresta.cat)
-            {
-            case 'o':
-                if (fluxo.cap == fluxo.fluxo)
-                {
-                    c_crit.insert({u, v, fluxo.fluxo});
-                }
-                break;
-            case 'r':
-                break;
-            case 's':
-                cap_total += fluxo.cap;
-                e_total += fluxo.fluxo;
-                break;
-            case 't':
-                e_nao_atendida += (fluxo.cap - fluxo.fluxo);
-                break;
-            default:
-                throw "Algo deu errado";
-            }
-        }
+        size_t u = caminho[i];
+        auto c = mapa[u];
+        std::cout << c << " ";
     }
-
-    size_t e_perdida = cap_total - e_total;
-
-    std::cout << e_total << "\n"
-              << e_nao_atendida << "\n"
-              << e_perdida << std::endl;
-
-    std::cout << c_crit.size() << std::endl;
-    if (c_crit.size() != 0)
-    {
-        for (auto &c : c_crit)
-        {
-            std::cout << std::get<0>(c) << " "
-                      << std::get<1>(c) << " "
-                      << std::get<2>(c) << "\n";
-        }
-    }
+    std::cout << mapa[caminho[i]] << std::endl;
 }
 
 int main()
 {
     // carrega a entrada do problema
-    auto grafo = carregar_entrada();
-
-    // atualiza o grafo com o fluxo a partir do algoritmo de Ford-Fulkerson
-    alg::ford_fulkerson(grafo);
+    auto [mapa, grafo, metodo] = carregar_entrada();
 
     // processa e imprime a saída
-    processar_saida(grafo);
+    processar_saida(mapa, grafo, metodo);
 
     return 0;
 }
