@@ -27,6 +27,10 @@ public:
     // método para adicionar arestas
     void add_aresta(size_t destino, size_t distancia);
 
+    // método que busca uma aresta e retorna um iterador
+    // caso não encontre, retorna o iterador end de arestas
+    std::vector<Aresta>::const_iterator possui_aresta(size_t v) const;
+
     // override do operador [] para acessar as arestas
     Aresta &operator[](size_t i);
 

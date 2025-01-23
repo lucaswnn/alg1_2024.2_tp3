@@ -60,13 +60,13 @@ std::pair<size_t, std::vector<size_t>> algoritmo(Grafo &grafo, char metodo)
     {
     case 'b':
         return alg::forca_bruta(grafo);
-        break;
-    case 'd':
-        return alg::programacao_dinamica(grafo);
-        break;
-    case 'g':
-        return alg::guloso(grafo);
-        break;
+        break; /*
+     case 'd':
+         //return alg::programacao_dinamica(grafo);
+         break;
+     case 'g':
+         //return alg::guloso(grafo);
+         break;*/
     default:
         throw "Algo deu errado";
     }
@@ -77,9 +77,9 @@ void processar_saida(mapa_ull_str_t &mapa, Grafo &grafo, char metodo)
     auto [dist, caminho] = algoritmo(grafo, metodo);
     std::cout << dist << "\n";
 
-    size_t n_c = caminho.size();
+    size_t n_c = caminho.size() - 1;
     size_t i;
-    for(i = 0; i <= n_c; i++)
+    for (i = 0; i < n_c; i++)
     {
         size_t u = caminho[i];
         auto c = mapa[u];

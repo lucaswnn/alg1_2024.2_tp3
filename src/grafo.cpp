@@ -11,6 +11,21 @@ void Vertice::add_aresta(size_t destino, size_t distancia)
     arestas.push_back(Aresta(destino, distancia));
 }
 
+std::vector<Aresta>::const_iterator Vertice::possui_aresta(size_t v) const
+{
+    const auto &end = arestas.end();
+    for (auto v_it = arestas.begin(); v_it != arestas.end(); v_it++)
+    {
+        size_t v_i = v_it->v;
+        if (v_i == v)
+        {
+            return v_it;
+        }
+    }
+
+    return end;
+}
+
 Aresta &Vertice::operator[](size_t i)
 {
     return arestas[i];
