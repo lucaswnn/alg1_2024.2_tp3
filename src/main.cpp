@@ -4,8 +4,8 @@
 #include "./../include/grafo.hpp"
 #include "./../include/algoritmos.hpp"
 
-typedef std::unordered_map<size_t, std::string> mapa_ull_str_t;
-typedef std::unordered_map<std::string, size_t> mapa_str_ull_t;
+typedef std::unordered_map<long, std::string> mapa_ull_str_t;
+typedef std::unordered_map<std::string, long> mapa_str_ull_t;
 
 std::tuple<mapa_ull_str_t, Grafo, char> carregar_entrada()
 {
@@ -27,7 +27,7 @@ std::tuple<mapa_ull_str_t, Grafo, char> carregar_entrada()
     for (int i = 0; i != n_arestas; i++)
     {
         std::string v1, v2;
-        size_t dist;
+        long dist;
         std::cin >> v1 >> v2 >> dist;
 
         auto [v1_it, inseriu_v1] = mapa_str_ull.insert(std::make_pair(v1, contador));
@@ -54,19 +54,19 @@ std::tuple<mapa_ull_str_t, Grafo, char> carregar_entrada()
     return std::make_tuple(mapa_ull_str, grafo, metodo);
 }
 
-std::pair<size_t, std::vector<size_t>> algoritmo(Grafo &grafo, char metodo)
+std::pair<long, std::vector<long>> algoritmo(Grafo &grafo, char metodo)
 {
     switch (metodo)
     {
     case 'b':
         return alg::forca_bruta(grafo);
-        break; /*
-     case 'd':
-         //return alg::programacao_dinamica(grafo);
-         break;
-     case 'g':
-         //return alg::guloso(grafo);
-         break;*/
+        break;
+    case 'd':
+        // return alg::programacao_dinamica(grafo);
+        break;
+    case 'g':
+        // return alg::guloso(grafo);
+        break;
     default:
         throw "Algo deu errado";
     }
@@ -77,11 +77,11 @@ void processar_saida(mapa_ull_str_t &mapa, Grafo &grafo, char metodo)
     auto [dist, caminho] = algoritmo(grafo, metodo);
     std::cout << dist << "\n";
 
-    size_t n_c = caminho.size() - 1;
-    size_t i;
+    long n_c = caminho.size() - 1;
+    long i;
     for (i = 0; i < n_c; i++)
     {
-        size_t u = caminho[i];
+        long u = caminho[i];
         auto c = mapa[u];
         std::cout << c << " ";
     }
